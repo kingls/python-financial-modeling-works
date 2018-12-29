@@ -1,0 +1,37 @@
+import datetime as dt
+import numpy as np
+import pandas as pd
+from pandas_datareader import data as pdr
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+import seaborn as sns
+import jqdatasdk as jq
+import statsmodels.tsa.stattools
+jq.auth('17344611914','zza2090')
+#时间获取，建立空数据集
+start = dt.datetime(2016,12,28)
+end = dt.datetime(2018,12,28)
+df=pd.DataFrame(index=date)
+#获取上证指数和SP500数据
+usa = pdr.DataReader("^GSPC", 'yahoo', start, end)
+chi =jq.get_price('000001.XSHG', start_date=start, end_date=end)
+date=pd.date_range(start,end)
+#数据合并与清洗
+usa['USA']=usa['Close']
+chi['China']=chi['close']
+df=df.join(usa['USA'])
+df=df.join(chi['China'])
+df=df.dropna()
+
+#绘制回归散点图
+ax = sns.regplot(x='China',y='USA',data = df)
+plt.show()
+#对时间序列进行协整检验 
+R=statsmodels.tsa.stattools.coint(df['China'],df['USA'])
+print('协整结论:',R)
+#获得回归数据结果
+x=np.array(df['China'])
+Y=np.array(df['USA'])
+X = sm.add_constant(x)
+results = sm.OLS(Y, X).fit()
+print(results.summary())
